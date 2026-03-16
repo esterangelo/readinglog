@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>reading log</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #faf9f6;
+      --surface: #ffffff;
+      --surface2: #f1efe8;
+      --border: rgba(0,0,0,0.1);
+      --border2: rgba(0,0,0,0.18);
+      --text: #1a1917;
+      --text2: #5f5e5a;
+      --text3: #888780;
+      --accent: #1d9e75;
+      --accent-light: #e1f5ee;
+      --radius: 10px;
+      --radius-lg: 14px;
+      --font: 'DM Sans', sans-serif;
+      --font-display: 'DM Serif Display', serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161512;
+        --surface: #1f1e1b;
+        --surface2: #2a2926;
+        --border: rgba(255,255,255,0.08);
+        --border2: rgba(255,255,255,0.14);
+        --text: #f0ede6;
+        --text2: #a8a59e;
+        --text3: #6b6966;
+        --accent: #1d9e75;
+        --accent-light: #0a3328;
+      }
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    .app {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+
+    header {
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1.1;
+    }
+
+    header p {
+      font-size: 14px;
+      color: var(--text3);
+      margin-top: 4px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 0.5px solid var(--border2);
+      margin-bottom: 1.5rem;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      font-size: 14px;
+      font-family: var(--font);
+      cursor: pointer;
+      color: var(--text2);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: var(--text);
+      font-weight: 500;
+    }
+
+    .tab:hover:not(.active) { color: var(--text); }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .metric {
+      background: var(--surface2);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: lowercase;
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .metric-value {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--text);
+      font-family: var(--font-display);
+    }
+
+    .metric-detail {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 3px;
+    }
+
+    .form-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 11px;
+      color: var(--text3);
+      display: block;
+      margin-bottom: 4px;
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 14px;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888780' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    .btn-add {
+      width: 100%;
+      padding: 11px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
+      font-family: var(--font);
+      cursor: pointer;
+      margin-top: 12px;
+      transition: opacity 0.15s;
+    }
+
+    .btn-add:hover { opacity: 0.88; }
+
+    .section-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: lowercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+    }
+
+    .entries-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .entry-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      transition: border-color 0.15s;
+    }
+
+    .entry-row:hover { border-color: var(--border2); }
+
+    .entry-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .entry-info { flex: 1; min-width: 0; }
+
+    .entry-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .entry-meta { font-size: 12px; color: var(--text3); margin-top: 1px; }
+
+    .entry-pages {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      font-family: var(--font-display);
+    }
+
+    .entry-del {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 18px;
+      line-height: 1;
+      padding: 0 2px;
+      font-family: var(--font);
+      transition: color 0.15s;
+    }
+
+    .entry-del:hover { color: #e24b4a; }
+
+    .empty {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--text3);
+      font-size: 14px;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .chart-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text3);
+      text-transform: lowercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 12px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .streak-bar {
+      display: flex;
+      gap: 3px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .streak-day {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    .streak-legend {
+      margin-top: 8px;
+      display: flex;
+      gap: 12px;
+      font-size: 11px;
+      color: var(--text3);
+    }
+
+    .streak-legend span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .streak-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .filter-btn {
+      padding: 5px 12px;
+      font-size: 12px;
+      background: none;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--text2);
+      font-family: var(--font);
+      transition: all 0.15s;
+    }
+
+    .filter-btn.active {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+
+    .export-btn {
+      width: 100%;
+      padding: 10px;
+      background: none;
+      color: var(--text2);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: var(--font);
+      cursor: pointer;
+      margin-top: 1.5rem;
+      transition: all 0.15s;
+    }
+
+    .export-btn:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    @media (max-width: 400px) {
+      .metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .metric-value { font-size: 20px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-full { grid-column: 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>reading log</h1>
+    <p>acompanhe suas leituras e hábitos</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('log')">registrar</button>
+    <button class="tab" onclick="switchTab('stats')">análise</button>
+    <button class="tab" onclick="switchTab('history')">histórico</button>
+  </div>
+
+  <!-- LOG -->
+  <div id="panel-log" class="panel active">
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="metric-label">páginas totais</div>
+        <div class="metric-value" id="m-pages">0</div>
+        <div class="metric-detail">todos os registros</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">sessões</div>
+        <div class="metric-value" id="m-sessions">0</div>
+        <div class="metric-detail">entradas únicas</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">dias lidos</div>
+        <div class="metric-value" id="m-days">0</div>
+        <div class="metric-detail">datas distintas</div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="form-full">
+          <label>título</label>
+          <input type="text" id="f-title" placeholder="ex.: A Interpretação dos Sonhos" />
+        </div>
+        <div>
+          <label>tipo</label>
+          <select id="f-genre">
+            <option value="">selecione...</option>
+            <option>livro</option>
+            <option>trecho de livro</option>
+            <option>artigo</option>
+            <option>acadêmico</option>
+            <option>outro</option>
+          </select>
+        </div>
+        <div>
+          <label>páginas lidas</label>
+          <input type="number" id="f-pages" placeholder="ex.: 42" min="1" />
+        </div>
+        <div>
+          <label>data</label>
+          <input type="date" id="f-date" />
+        </div>
+        <div>
+          <label>nota pessoal (opcional)</label>
+          <input type="text" id="f-note" placeholder="ex.: releitura, cap. difícil..." />
+        </div>
+      </div>
+      <button class="btn-add" onclick="addEntry()">+ adicionar leitura</button>
+    </div>
+
+    <div class="section-label">entradas recentes</div>
+    <div id="recent-list" class="entries-list"></div>
+  </div>
+
+  <!-- STATS -->
+  <div id="panel-stats" class="panel">
+    <div class="chart-card">
+      <div class="chart-title">distribuição por tipo</div>
+      <div class="legend" id="pie-legend"></div>
+      <div style="position: relative; width: 100%; height: 220px;">
+        <canvas id="pie-chart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">páginas por semana (últimas 8 semanas)</div>
+      <div style="position: relative; width: 100%; height: 200px;">
+        <canvas id="bar-chart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">sequência de leitura (últimos 60 dias)</div>
+      <div class="streak-bar" id="streak-bar"></div>
+      <div class="streak-legend">
+        <span><span class="streak-legend-dot" style="background:#1d9e75;"></span>leu</span>
+        <span><span class="streak-legend-dot" style="background:#d3d1c7;"></span>não leu</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="panel-history" class="panel">
+    <div class="filter-row" id="filter-row">
+      <button class="filter-btn active" onclick="setFilter('todos')">todos</button>
+    </div>
+    <div id="history-list" class="entries-list"></div>
+    <button class="export-btn" onclick="exportCSV()">↓ exportar como CSV</button>
+  </div>
+</div>
+
+<script>
+const COLORS = {
+  'livro': '#1d9e75',
+  'trecho de livro': '#378add',
+  'artigo': '#ba7517',
+  'acadêmico': '#7f77dd',
+  'outro': '#888780'
+};
+
+const BADGE = {
+  'livro': 'background:#e1f5ee;color:#0f6e56',
+  'trecho de livro': 'background:#e6f1fb;color:#185fa5',
+  'artigo': 'background:#faeeda;color:#854f0b',
+  'acadêmico': 'background:#eeedfe;color:#534ab7',
+  'outro': 'background:#f1efe8;color:#5f5e5a'
+};
+
+let entries = [];
+let filterGenre = 'todos';
+let activeTab = 'log';
+let pieChart, barChart;
+
+function load() {
+  try {
+    const raw = localStorage.getItem('rl-entries');
+    if (raw) entries = JSON.parse(raw);
+  } catch(e) { entries = []; }
+  const d = document.getElementById('f-date');
+  if (d) d.value = new Date().toISOString().split('T')[0];
+  render();
+}
+
+function save() {
+  try { localStorage.setItem('rl-entries', JSON.stringify(entries)); } catch(e) {}
+}
+
+function addEntry() {
+  const title = document.getElementById('f-title').value.trim();
+  const genre = document.getElementById('f-genre').value;
+  const pages = parseInt(document.getElementById('f-pages').value);
+  const date = document.getElementById('f-date').value;
+  const note = document.getElementById('f-note').value.trim();
+  if (!title || !genre || !pages || !date) { alert('Preencha título, tipo, páginas e data.'); return; }
+  entries.unshift({ id: Date.now(), title, genre, pages, date, note });
+  save();
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-genre').value = '';
+  document.getElementById('f-pages').value = '';
+  document.getElementById('f-note').value = '';
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  render();
+}
+
+function deleteEntry(id) {
+  if (!confirm('Remover esta entrada?')) return;
+  entries = entries.filter(e => e.id !== id);
+  save();
+  render();
+}
+
+function render() {
+  updateMetrics();
+  renderRecent();
+  renderHistory();
+  if (activeTab === 'stats') renderStats();
+}
+
+function updateMetrics() {
+  const totalPages = entries.reduce((s,e) => s + e.pages, 0);
+  const uniqueDays = new Set(entries.map(e => e.date)).size;
+  document.getElementById('m-pages').textContent = totalPages.toLocaleString('pt-BR');
+  document.getElementById('m-sessions').textContent = entries.length;
+  document.getElementById('m-days').textContent = uniqueDays;
+}
+
+function fmtDate(d) {
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function entryHTML(e) {
+  const bs = BADGE[e.genre] || BADGE['outro'];
+  return `<div class="entry-row">
+    <span class="entry-badge" style="${bs}">${e.genre}</span>
+    <div class="entry-info">
+      <div class="entry-title">${e.title}</div>
+      <div class="entry-meta">${fmtDate(e.date)}${e.note ? ' · ' + e.note : ''}</div>
+    </div>
+    <div class="entry-pages">${e.pages}p</div>
+    <button class="entry-del" onclick="deleteEntry(${e.id})">×</button>
+  </div>`;
+}
+
+function renderRecent() {
+  const el = document.getElementById('recent-list');
+  const recent = entries.slice(0, 5);
+  el.innerHTML = recent.length ? recent.map(entryHTML).join('') : '<div class="empty">nenhum registro ainda.</div>';
+}
+
+function renderHistory() {
+  const genres = ['todos', ...new Set(entries.map(e => e.genre))];
+  document.getElementById('filter-row').innerHTML = genres.map(g =>
+    `<button class="filter-btn ${filterGenre===g?'active':''}" onclick="setFilter('${g}')">${g}</button>`
+  ).join('');
+  const filtered = filterGenre === 'todos' ? entries : entries.filter(e => e.genre === filterGenre);
+  const el = document.getElementById('history-list');
+  el.innerHTML = filtered.length ? filtered.map(entryHTML).join('') : '<div class="empty">nenhum registro.</div>';
+}
+
+function setFilter(g) {
+  filterGenre = g;
+  renderHistory();
+}
+
+function renderStats() {
+  renderPie();
+  renderBar();
+  renderStreak();
+}
+
+function renderPie() {
+  const counts = {}, pages = {};
+  entries.forEach(e => {
+    counts[e.genre] = (counts[e.genre] || 0) + 1;
+    pages[e.genre] = (pages[e.genre] || 0) + e.pages;
+  });
+  const total = entries.length || 1;
+  const labels = Object.keys(counts);
+  const data = labels.map(l => counts[l]);
+  const colors = labels.map(l => COLORS[l] || '#888780');
+  document.getElementById('pie-legend').innerHTML = labels.map((l,i) =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${colors[i]}"></span>${l} ${Math.round(counts[l]/total*100)}%</span>`
+  ).join('');
+  const ctx = document.getElementById('pie-chart').getContext('2d');
+  if (pieChart) pieChart.destroy();
+  pieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#fff' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${c.raw} sessões (${Math.round(c.raw/total*100)}%)` } } }
+    }
+  });
+}
+
+function renderBar() {
+  const now = new Date();
+  const weeks = [];
+  for (let i = 7; i >= 0; i--) {
+    const start = new Date(now); start.setDate(now.getDate() - i * 7);
+    start.setHours(0,0,0,0);
+    const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
+    const label = `${String(start.getDate()).padStart(2,'0')}/${String(start.getMonth()+1).padStart(2,'0')}`;
+    const pg = entries.filter(e => { const d = new Date(e.date+'T00:00:00'); return d >= start && d <= end; }).reduce((s,e) => s + e.pages, 0);
+    weeks.push({ label, pg });
+  }
+  const ctx = document.getElementById('bar-chart').getContext('2d');
+  if (barChart) barChart.destroy();
+  barChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: weeks.map(w => w.label),
+      datasets: [{ data: weeks.map(w => w.pg), backgroundColor: '#1d9e75', borderRadius: 5 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#888780', font: { size: 11 }, autoSkip: false, maxRotation: 45 } },
+        y: { grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { color: '#888780', font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function renderStreak() {
+  const readDates = new Set(entries.map(e => e.date));
+  const el = document.getElementById('streak-bar');
+  el.innerHTML = '';
+  for (let i = 59; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    const div = document.createElement('div');
+    div.className = 'streak-day';
+    div.style.background = readDates.has(key) ? '#1d9e75' : 'var(--surface2)';
+    div.title = key;
+    el.appendChild(div);
+  }
+}
+
+function exportCSV() {
+  const header = 'título,tipo,páginas,data,nota';
+  const rows = entries.map(e => `"${e.title}","${e.genre}",${e.pages},"${e.date}","${e.note || ''}"`);
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'reading-log.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['log','stats','history'][i] === tab);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'stats') renderStats();
+}
+
+load();
+</script>
+</body>
+</html>
